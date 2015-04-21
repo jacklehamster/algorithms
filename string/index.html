@@ -1,0 +1,36 @@
+<!--
+    index.html
+
+    CODING PRACTICE
+    Vincent Le Quang
+    April 18, 2015
+-->
+
+<html>
+    <head>
+        <title>Coding - Vincent Le Quang</title>
+        <link rel="stylesheet" type="text/css" href="algo.css">
+        <script language="javascript" src="input.js"></script>
+        <script language="javascript" src="algo.js"></script>
+    </head>
+
+    <script language="javascript">
+        
+        var algo;
+        
+        //  onLoad function
+        //  initialize the calendar and layout the sample days
+        function onDOMContentLoaded(event) {
+            algo = new Algo();
+            algo.start();
+        }
+        
+        //  event called when the page's DOM is loaded. Occurs before onLoad
+        window.addEventListener("DOMContentLoaded",onDOMContentLoaded); 
+    </script>
+    
+    <body>
+        Classic problems from <a href="http://www.programcreek.com/2012/11/top-10-algorithms-for-coding-interview/">http://www.programcreek.com/2012/11/top-10-algorithms-for-coding-interview/</a>
+        <hr>
+    </body>
+</html>

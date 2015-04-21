@@ -1,0 +1,64 @@
+<!--
+    index.html
+
+    CODING PRACTICE
+    Vincent Le Quang
+    April 18, 2015
+-->
+
+<html>
+    <head>
+        <title>Coding - Vincent Le Quang</title>
+        <link rel="stylesheet" type="text/css" href="algo.css">
+        <script language="javascript" src="../lib/heap.js"></script>
+        <script language="javascript" src="algo.js"></script>
+    </head>
+
+    <script language="javascript">
+        var algo
+        //  onLoad function
+        function onDOMContentLoaded(event) {
+            algo = new Algo();
+            algo.start();
+            showSize(false);
+        }        
+        function compress() {
+            document.getElementById("text").value = algo.compress(document.getElementById("text").value);
+            showSize(true);
+        }
+        
+        function uncompress() {
+            document.getElementById("text").value = algo.uncompress(document.getElementById("text").value);
+            showSize(false);
+        }
+        
+        function showSize(bits) {
+            if(bits) {
+                document.getElementById("size").value = document.getElementById("text").value.length + " bits ("
+                    + Math.ceil(document.getElementById("text").value.length/8) + " bytes)";
+            }
+            else {
+                document.getElementById("size").value = document.getElementById("text").value.length + " characters";
+            }
+        }
+        
+        //  event called when the page's DOM is loaded. Occurs before onLoad
+        window.addEventListener("DOMContentLoaded",onDOMContentLoaded); 
+    </script>
+    
+    <body class="noselect" >
+        Applying Huffman compression algorithm
+        <br>
+        <textarea id="text" cols=100 rows=10 onkeyup="showSize(false)" onchange="showSize(false)">
+            In computer science and information theory, a Huffman code is an optimal prefix code found using the algorithm developed by David A. Huffman while he was a Ph.D. student at MIT, and published in the 1952 paper "A Method for the Construction of Minimum-Redundancy Codes".[1] The process of finding and/or using such a code is called Huffman coding and is a common technique in entropy encoding, including in lossless data compression. The algorithm's output can be viewed as a variable-length code table for encoding a source symbol (such as a character in a file). Huffman's algorithm derives this table based on the estimated probability or frequency of occurrence (weight) for each possible value of the source symbol. As in other entropy encoding methods, more common symbols are generally represented using fewer bits than less common symbols. Huffman's method can be efficiently implemented, finding a code in linear time to the number of input weights if these weights are sorted.[2] However, although optimal among methods encoding symbols separately, Huffman coding is not always optimal among all compression methods.
+        </textarea>
+        <br>
+        <input id="size" type=text width=10>
+        <br>
+        <button id="compressButton" style="width:150;height:40px;" onclick="compress()">compress</button>
+        <button id="uncompressButton" style="width:150;height:40px;" onclick="uncompress()">uncompress</button>
+            
+        </canvas>
+        <hr>
+    </body>
+</html>

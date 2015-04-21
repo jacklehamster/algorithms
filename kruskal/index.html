@@ -1,0 +1,122 @@
+<!--
+    index.html
+
+    CODING PRACTICE
+    Vincent Le Quang
+    April 18, 2015
+-->
+
+<html>
+    <head>
+        <title>Coding - Vincent Le Quang</title>
+        <link rel="stylesheet" type="text/css" href="algo.css">
+        <script language="javascript" src="../lib/heap.js"></script>
+        <script language="javascript" src="algo.js"></script>
+    </head>
+
+    <script language="javascript">
+        
+        var canvas;
+        var context;
+        var algo;
+        
+        var trees = [];
+        var selectedTree = -1;
+        
+        //  onLoad function
+        function onDOMContentLoaded(event) {
+            algo = new Algo();
+            algo.start();
+            canvas = document.getElementById("canvas");
+            context = canvas.getContext("2d");
+            
+            canvas.addEventListener("mousemove",mouseMove);
+            canvas.addEventListener("mousedown",mouseMove);
+        }
+        
+        function updateDisplay() {
+            context.clearRect(0,0,800,600);
+        }
+        
+        function mouseMove(e) {
+            if(e.type=="mousedown") {
+                var x = e.pageX - canvas.offsetLeft;
+                var y = e.pageY - canvas.offsetTop;
+                var minDist = 1000000;
+                var treeIndex = -1;
+                for(var i=0;i<trees.length;i++) {
+                    var dx = trees[i].x - x;
+                    var dy = trees[i].y - y;
+                    var dist = Math.sqrt(dx*dx+dy*dy);
+                    if(dist<minDist) {
+                        treeIndex = i;
+                        minDist = dist;
+                    }
+                }
+                if(minDist<20) {
+                    selectedTree = treeIndex;
+                }
+                else {
+                    trees.push({x:x,y:y});
+                    selectedTree=trees.length-1;
+                }
+                update();
+            }
+            else {
+                var ispen = (e.buttons!==undefined?e.buttons:e.which);
+                if(selectedTree>=0) {
+                    var x = e.pageX - canvas.offsetLeft;
+                    var y = e.pageY - canvas.offsetTop;
+                    if(ispen) {
+                        trees[selectedTree].x = x;
+                        trees[selectedTree].y = y;
+                        update();
+                    }
+                    else {
+                        selectedTree = -1;
+                    }
+                }
+                
+            }
+        }
+        
+        function update() {
+            
+            var connections = algo.connect(trees);
+            
+            context.clearRect(0,0,800,600);
+            context.beginPath();
+            context.fillStyle = "#009900";
+            context.globalCompositeOperation = "source-over";
+            for(var i=0;i<trees.length;i++) {
+                var tree = trees[i];
+                context.moveTo(tree.x,tree.y);
+                context.arc(tree.x,tree.y,10,0,2*Math.PI);
+            }
+            context.fill();
+            
+            context.beginPath();
+            for(var i=0;i<connections.length;i++) {
+                var connection = connections[i];
+                //console.log(connection);
+                context.moveTo(connection.from.x,connection.from.y);
+                context.lineTo(connection.to.x,connection.to.y);
+            }
+            context.stroke();
+        }
+        
+        
+        //  event called when the page's DOM is loaded. Occurs before onLoad
+        window.addEventListener("DOMContentLoaded",onDOMContentLoaded); 
+    </script>
+    
+    <body class="noselect" >
+        A visual study of Kruskal algorithm
+        <br>
+        <br>
+        <canvas id="canvas" width=800 height=600>
+            
+        </canvas>
+        <hr>
+    </body>
+</html>
