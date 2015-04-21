@@ -29,13 +29,11 @@ function Algo() {
         var edges = [];
         for(var i=0;i<trees.length;i++) {
             var tree1 = trees[i];
-            for(var j=0;j<trees.length;j++) {
-                if(i!=j) {
-                    var tree2 = trees[j];
-                    var dist = distance(tree1,tree2);
-                    if(dist<100)
-                        edges.push({connection:{from:tree1,to:tree2},indexes:[i,j],distance:dist});
-                }
+            for(var j=i+1;j<trees.length;j++) {
+                var tree2 = trees[j];
+                var dist = distance(tree1,tree2);
+                if(dist<100)
+                    edges.push({connection:{from:tree1,to:tree2},indexes:[i,j],distance:dist});
             }
         }
         return edges;

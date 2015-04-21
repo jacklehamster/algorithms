@@ -47,7 +47,11 @@
     </script>
     
     <body class="noselect" >
-        Applying Huffman compression algorithm
+        Applying <a href="http://en.wikipedia.org/wiki/Huffman_coding">Huffman</a> compression algorithm
+        <br>
+        This javascript program turns text into bits using huffman encoding compression
+        <br>
+        Note that the bits also include the Huffman table encoded in bits at the beginning
         <br>
         <textarea id="text" cols=100 rows=10 onkeyup="showSize(false)" onchange="showSize(false)">
             In computer science and information theory, a Huffman code is an optimal prefix code found using the algorithm developed by David A. Huffman while he was a Ph.D. student at MIT, and published in the 1952 paper "A Method for the Construction of Minimum-Redundancy Codes".[1] The process of finding and/or using such a code is called Huffman coding and is a common technique in entropy encoding, including in lossless data compression. The algorithm's output can be viewed as a variable-length code table for encoding a source symbol (such as a character in a file). Huffman's algorithm derives this table based on the estimated probability or frequency of occurrence (weight) for each possible value of the source symbol. As in other entropy encoding methods, more common symbols are generally represented using fewer bits than less common symbols. Huffman's method can be efficiently implemented, finding a code in linear time to the number of input weights if these weights are sorted.[2] However, although optimal among methods encoding symbols separately, Huffman coding is not always optimal among all compression methods.
