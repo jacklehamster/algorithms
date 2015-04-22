@@ -71,8 +71,6 @@ function Algo() {
                     }
                 }
             }
-            console.log(distances);
-            console.log(shortestPaths);
         }
         
         var connections = [];
