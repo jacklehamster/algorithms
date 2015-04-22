@@ -1,5 +1,4 @@
-# algorithms
-Algorithms
+# Algorithms
 
 http://jacklehamster.github.io/algorithms/
 
