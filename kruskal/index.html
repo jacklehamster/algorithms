@@ -83,7 +83,8 @@
         
         function update() {
             
-            var connections = algo.connect(trees);
+            var treecolors = new Array(trees.length);
+            var connections = algo.connect(trees,treecolors);
             
             context.clearRect(0,0,800,600);
             context.beginPath();
@@ -91,6 +92,11 @@
             context.globalCompositeOperation = "source-over";
             for(var i=0;i<trees.length;i++) {
                 var tree = trees[i];
+                if(treecolors[i]!=context.fillStyle) {
+                    context.fill();
+                    context.beginPath();
+                    context.fillStyle = treecolors[i];
+                }
                 context.moveTo(tree.x,tree.y);
                 context.arc(tree.x,tree.y,10,0,2*Math.PI);
             }
@@ -99,7 +105,6 @@
             context.beginPath();
             for(var i=0;i<connections.length;i++) {
                 var connection = connections[i];
-                //console.log(connection);
                 context.moveTo(connection.from.x,connection.from.y);
                 context.lineTo(connection.to.x,connection.to.y);
             }

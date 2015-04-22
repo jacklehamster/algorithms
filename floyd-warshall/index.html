@@ -1,0 +1,203 @@
+<!--
+    index.html
+
+    CODING PRACTICE
+    Vincent Le Quang
+    April 18, 2015
+-->
+
+<html>
+    <head>
+        <title>Floyd-Warshall Algorithm</title>
+        <script src="../../header.js"></script>
+        <link rel="stylesheet" type="text/css" href="algo.css">
+        <script language="javascript" src="../lib/heap.js"></script>
+        <script language="javascript" src="algo.js"></script>
+    </head>
+
+    <script language="javascript">
+        
+        var canvas;
+        var context;
+        var algo;
+        
+        var shortestPaths = [];
+        var trees = [];
+        var selectedTree = -1, hoveredTree = -1, movedTree = -1, hasMoved = false;
+        
+        //  onLoad function
+        function onDOMContentLoaded(event) {
+            algo = new Algo();
+            algo.start();
+            canvas = document.getElementById("canvas");
+            context = canvas.getContext("2d");
+            
+            canvas.addEventListener("mousemove",mouseMove);
+            canvas.addEventListener("mousedown",mouseMove);
+            canvas.addEventListener("mouseup",
+                function(e) {
+                    if(selectedTree!=movedTree) {
+                        if(!hasMoved || selectedTree<0)
+                            selectedTree = movedTree;
+                    }
+                    update(true);
+                }
+            );
+        }
+        
+        function updateDisplay() {
+            context.clearRect(0,0,800,600);
+        }
+        
+        function mouseMove(e) {
+            var needsUpdate = false;
+            var needsRecalculate = false;
+            
+            var x = e.pageX - canvas.offsetLeft;
+            var y = e.pageY - canvas.offsetTop;
+            var minDist = Number.MAX_VALUE;
+            var treeIndex = -1;
+            for(var i=0;i<trees.length;i++) {
+                var dx = trees[i].x - x;
+                var dy = trees[i].y - y;
+                var dist = Math.sqrt(dx*dx+dy*dy);
+                if(dist<minDist) {
+                    treeIndex = i;
+                    minDist = dist;
+                }
+            }
+            
+            if(e.type=="mousedown") {
+                if(minDist<20) {
+                    movedTree = treeIndex;
+                    hasMoved = false;
+                }
+                else {
+                    trees.push({x:x,y:y});
+                    movedTree=trees.length-1;
+                    treeIndex = selectedTree;
+                    needsRecalculate = true;
+                    hasMoved = true;
+                }
+                needsUpdate = true;
+            }
+            else {
+                if(minDist>=20) {
+                    treeIndex = -1;
+                }
+            }
+            
+            if(hoveredTree!=treeIndex) {
+                hoveredTree = treeIndex;
+                needsUpdate = true;
+            }            
+            
+            
+            if(e.type=="mousemove") {
+                var ispen = (e.buttons!==undefined?e.buttons:e.which);
+                if(movedTree>=0) {
+                    var x = e.pageX - canvas.offsetLeft;
+                    var y = e.pageY - canvas.offsetTop;
+                    if(ispen) {
+                        trees[movedTree].x = x;
+                        trees[movedTree].y = y;
+                        needsUpdate = true;
+                        needsRecalculate = true;
+                        hasMoved = true;
+                    }
+                    else if(selectedTree!=movedTree) {
+                        if(!hasMoved || selectedTree<0)
+                            selectedTree = movedTree;
+                    }
+                }
+            }
+            
+            if(needsUpdate) {
+                update(needsRecalculate);
+            }
+        }
+        
+        function update(needsRecalculate) {
+            
+            var connections = algo.connect(trees,shortestPaths,needsRecalculate);
+            
+            context.clearRect(0,0,800,600);
+            context.beginPath();
+            context.fillStyle = "#009900";
+            context.globalCompositeOperation = "source-over";
+            for(var i=0;i<trees.length;i++) {
+                var tree = trees[i];
+                if(i!=selectedTree) {
+                    context.moveTo(tree.x,tree.y);
+                    context.arc(tree.x,tree.y,10,0,2*Math.PI);
+                }
+            }
+            context.fill();
+            
+            if(hoveredTree>=0) {
+                context.beginPath();
+                var tree = trees[hoveredTree];
+                context.strokeStyle = "#00FF99";
+                context.lineWidth = 1;
+                context.moveTo(tree.x+12,tree.y);
+                context.arc(tree.x,tree.y,12,0,2*Math.PI);
+                context.stroke();
+            }
+            
+            if(selectedTree>=0) {
+                context.beginPath();
+                var tree = trees[selectedTree];
+                context.fillStyle = "#FF9900";
+                context.moveTo(tree.x,tree.y);
+                context.arc(tree.x,tree.y,10,0,2*Math.PI);
+                context.fill();
+            }
+            
+            context.beginPath();
+            context.strokeStyle = "#000000";
+            context.lineWidth = 1;
+            for(var i=0;i<connections.length;i++) {
+                var connection = connections[i];
+                context.moveTo(connection.from.x,connection.from.y);
+                context.lineTo(connection.to.x,connection.to.y);
+            }
+            context.stroke();
+            
+            if(selectedTree>=0 && hoveredTree>=0) {
+                context.beginPath();
+                context.strokeStyle = "#FF0000";
+                context.lineWidth = 3;
+                var treeIndex = selectedTree;
+                context.moveTo(trees[treeIndex].x,trees[treeIndex].y);
+                while(treeIndex!=hoveredTree) {
+                    treeIndex = shortestPaths[treeIndex][hoveredTree];
+                    if(treeIndex>=0) {
+                        context.lineTo(trees[treeIndex].x,trees[treeIndex].y);
+                    }
+                    else {
+                        break;
+                    }
+                }
+                context.stroke();                
+            }
+        }
+        
+        
+        //  event called when the page's DOM is loaded. Occurs before onLoad
+        window.addEventListener("DOMContentLoaded",onDOMContentLoaded); 
+    </script>
+    
+    <body class="noselect" >
+        A visual study of <a href="https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm">Floyd-Warshall</a> algorithm
+        <br>
+        <br>
+        Place trees or move them with the mouse. Edges are created if their distances are less than 100px.
+        This algorithm calculates the shortest path for all pairs on the entire graph.
+        Click on a tree to select it, then hover over another tree to see the shortest path from the selected tree to the hovered tree.
+        <br>
+        <canvas id="canvas" width=800 height=600 style="border:2px solid black">
+            
+        </canvas>
+        <hr>
+    </body>
+</html>

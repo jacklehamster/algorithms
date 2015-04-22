@@ -42,7 +42,7 @@ function Algo() {
     function getGroups(trees) {
         var groups = [];
         for(var i=0;i<trees.length;i++) {
-            groups.push({parent:i,color:(Math.floor(Math.random()*parseInt("ffffff",16))).toString(16) });
+            groups.push({parent:i,color:"#"+(Math.floor(Math.random()*parseInt("ffffff",16))).toString(16) });
         }
         return groups;
     }
@@ -73,7 +73,7 @@ function Algo() {
         groups[root1].parent = root2;
     }
 
-    this.connect = function(trees) {
+    this.connect = function(trees,colors) {
         //  get edges
         var edges = getEdges(trees);
         var groups = getGroups(trees);
@@ -97,9 +97,14 @@ function Algo() {
             }
         }
         
+        for(var i=0;i<groups.length;i++) {
+            colors[i] = groups[findRoot(i,groups)].color;
+        }
+        
         var connections = [];
         for(var i=0;i<validEdges.length;i++) {
-            connections.push(validEdges[i].connection);
+            var edge = validEdges[i];
+            connections.push(edge.connection);
         }
         
         return connections;
