@@ -8,7 +8,7 @@
 
 <html>
     <head>
-        <title>Floyd-Warshall Algorithm</title>
+        <title>A-star Search Algorithm</title>
         <script src="../../header.js"></script>
         <link rel="stylesheet" type="text/css" href="algo.css">
         <script language="javascript" src="../lib/heap.js"></script>
@@ -21,10 +21,8 @@
         var context;
         var algo;
         
-        var shortestPaths = [];
         var trees = [];
         var selectedTree = -1, hoveredTree = -1, movedTree = -1, hasMoved = false;
-
         
         function clearScreen() {
             selectedTree = -1; hoveredTree = -1; movedTree = -1; hasMoved = false;
@@ -49,7 +47,7 @@
                 trees = data.trees;
                 selectedTree = data.selectedTree;
             }
-            update(true);
+            update();
         }
         
         //  onLoad function
@@ -67,22 +65,19 @@
                         if(!hasMoved || selectedTree<0)
                             selectedTree = movedTree;
                     }
-                    update(true);
+                    update();
+                    save();
                 }
             );
             document.addEventListener("visibilitychange", function() {
                 load();
             });
             load();
-        }
-        
-        function updateDisplay() {
-            context.clearRect(0,0,800,600);
+            
         }
         
         function mouseMove(e) {
             var needsUpdate = false;
-            var needsRecalculate = false;
             
             var x = e.pageX - canvas.offsetLeft;
             var y = e.pageY - canvas.offsetTop;
@@ -106,10 +101,8 @@
                 else {
                     trees.push({x:x,y:y});
                     treeIndex = movedTree=trees.length-1;
-                    needsRecalculate = true;
                     hasMoved = true;
                 }
-                needsUpdate = true;
             }
             else {
                 if(minDist>=20) {
@@ -132,7 +125,6 @@
                         trees[movedTree].x = x;
                         trees[movedTree].y = y;
                         needsUpdate = true;
-                        needsRecalculate = true;
                         hasMoved = true;
                     }
                     else if(selectedTree!=movedTree) {
@@ -143,9 +135,21 @@
             }
             
             if(needsUpdate) {
-                update(needsRecalculate);
+                update();
                 save();
             }
+        }
+        
+        function pathDistance(path) {
+            var dist = 0;
+            for(var i=0;i<path.length-1;i++) {
+                var v = trees[path[i]];
+                var v2 = trees[path[i+1]];
+                var dx = v.x-v2.x;
+                var dy = v.y-v2.y;
+                dist += Math.sqrt(dx*dx+dy*dy);
+            }
+            return dist;
         }
         
         function pathDistanceNodes(path) {
@@ -160,10 +164,10 @@
             return dist;
         }
         
-        
-        function update(needsRecalculate) {
+        function update() {
             
-            var connections = algo.connect(trees,shortestPaths,needsRecalculate);
+            var shortestPath = [];
+            var connections = algo.connect(trees,selectedTree,hoveredTree,shortestPath);
             
             context.clearRect(0,0,800,600);
             
@@ -177,26 +181,6 @@
             }
             context.stroke();
             
-            var shortestPath = [];
-            if(selectedTree>=0 && hoveredTree>=0) {
-                context.beginPath();
-                context.strokeStyle = "#FF0000";
-                context.lineWidth = 3;
-                var treeIndex = selectedTree;
-                context.moveTo(trees[treeIndex].x,trees[treeIndex].y);
-                while(treeIndex!=hoveredTree) {
-                    treeIndex = shortestPaths[treeIndex][hoveredTree];
-                    if(treeIndex>=0) {
-                        shortestPath.push(treeIndex);
-                        context.lineTo(trees[treeIndex].x,trees[treeIndex].y);
-                    }
-                    else {
-                        break;
-                    }
-                }
-                context.stroke();                
-            }
-            
             context.beginPath();
             context.font = "10px serif";
             context.fillStyle = "#8888ff";
@@ -208,6 +192,22 @@
                 context.fillText(str,px-5*str.length,py);
             }
             context.fill();
+            
+            if(shortestPath.length) {
+                context.beginPath();
+                context.strokeStyle = "#FF0000";
+                context.lineWidth = 3;
+                var treeIndex = selectedTree;
+                context.moveTo(trees[treeIndex].x,trees[treeIndex].y);
+                shortestPath.reverse();
+                console.log(pathDistance(shortestPath),shortestPath);
+                while(shortestPath.length) {
+                    treeIndex = shortestPath.pop();
+                    context.lineTo(trees[treeIndex].x,trees[treeIndex].y);
+                }
+                context.stroke();
+            }
+            
             
             
             context.beginPath();
@@ -221,17 +221,6 @@
                 }
             }
             context.fill();
-            
-            context.beginPath();
-            context.fillStyle = "#FFaaaa";
-            context.globalCompositeOperation = "source-over";
-            for(var i=0;i<shortestPath.length;i++) {
-                var tree = trees[shortestPath[i]];
-                context.moveTo(tree.x,tree.y);
-                context.arc(tree.x,tree.y,10,0,2*Math.PI);
-            }
-            context.fill();            
-            
             
             if(hoveredTree>=0) {
                 context.beginPath();
@@ -252,7 +241,6 @@
                 context.fill();
             }
             
-            
             context.beginPath();
             context.fillStyle = "#FFFFFF";
             context.font = "16px serif";
@@ -263,6 +251,7 @@
                 context.fillText(str,tree.x-4*str.length,tree.y+5);
             }
             context.fill();
+            
         }
         
         
@@ -271,14 +260,16 @@
     </script>
     
     <body class="noselect" >
-        A visual study of <a href="https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm">Floyd-Warshall</a> algorithm
+        A visual study of <a href="http://en.wikipedia.org/wiki/A*_search_algorithm">A *</a> algorithm
         <br>
         <br>
         Place trees or move them with the mouse. Edges are created if their distances are less than 100px.
-        This algorithm calculates the shortest path for all pairs on the entire graph.
-        Click on a tree to select it, then hover over another tree to see the shortest path from the selected tree to the hovered tree.
+        This algorithm calculates the shortest path using A*.
+        Click on a tree to select it, then hover over another tree to see the shortest path (in terms of vertices) from the selected tree to the hovered tree.
         <br>
         <div style="text-align:center;width:100%">
+            <button id="clearButton" style="width:150;height:40px;" onclick="clearScreen()">clear</button>
+            <br>
             <canvas id="canvas" width=800 height=600 style="border:2px solid black; display:inline">
             </canvas>
         </div>

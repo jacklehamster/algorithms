@@ -1,0 +1,207 @@
+<!--
+    index.html
+
+    CODING PRACTICE
+    Vincent Le Quang
+    April 18, 2015
+-->
+
+<html>
+    <head>
+        <title>Best-First Search Algorithm</title>
+        <script src="../../header.js"></script>
+        <link rel="stylesheet" type="text/css" href="algo.css">
+        <script language="javascript" src="../lib/heap.js"></script>
+        <script language="javascript" src="algo.js"></script>
+    </head>
+
+    <script language="javascript">
+        
+        var canvas;
+        var context;
+        var mode = null;
+        var algo;
+        var previousPoint;
+        var paths = [];
+
+        var voyager = [];
+        
+        
+        //  onLoad function
+        function onDOMContentLoaded(event) {
+            algo = new Algo();
+            algo.start();
+            updateButtons();
+            canvas = document.getElementById("canvas");
+            context = canvas.getContext("2d");
+            canvas.addEventListener("mousemove",mouseMove);
+            canvas.addEventListener("mouseup",mouseMove);
+            canvas.addEventListener("mousedown",mouseMove);
+            canvas.addEventListener("mouseout",mouseMove);
+            canvas.addEventListener("mouseover",mouseMove);
+            refresh();
+        }
+        
+        function mouseMove(e) {
+            var ispen = event.type!="mouseout" && event.type!="mouseup" && (e.buttons!==undefined?e.buttons:e.which);
+            var x = e.pageX - canvas.offsetLeft;
+            var y = e.pageY - canvas.offsetTop;
+            if(mode=="draw"||mode=="erase") {
+                var ispen = event.type!="mouseout" && event.type!="mouseup" && (e.buttons!==undefined?e.buttons:e.which);
+                if(ispen) {
+                    if(previousPoint) {
+                        draw(previousPoint.x,previousPoint.y,x,y);
+                        previousPoint.x = x;
+                        previousPoint.y = y;
+                    }
+                    else {
+                        previousPoint = {x:x,y:y};
+                    }
+
+                    if(e.stopPropagation) e.stopPropagation();
+                    if(e.preventDefault) e.preventDefault();
+                    e.cancelBubble=true;
+                    e.returnValue=false;
+                    return false;
+                }
+                else {
+                    previousPoint = null;
+                }
+            }
+            else if(mode=="voyage") {
+                if(ispen) {
+                    doVoyage(x,y);
+                }
+            }
+        }
+        
+        function doVoyage(x,y) {
+            canGoXY(x,y);
+            var lastVoyage = voyager[voyager.length-1];
+            var array = algo.calculateVoyage(lastVoyage,{x:x,y:y},canGoXY);
+//            console.log(array);
+            voyager = voyager.concat(array);
+            updateDrawing();
+        }
+        
+        function canGoXY(x,y) {
+            if(x<0 || y<0 || x>800||y>600) {
+                return false;
+            }
+            var p = context.getImageData(x,y,1,1).data;
+            return p[3]==0;
+        }
+        
+        var time = 0;
+        function refresh() {
+            requestAnimationFrame(refresh);            
+            var now = new Date().getTime();
+            if(now-time>10) {
+                time = now;
+                updateDrawing();
+                if(voyager.length>1) {
+                    var v0 = voyager.shift();
+                    var dx = voyager[0].x - v0.x;
+                    var dy = voyager[0].y - v0.y;
+                    var dist = Math.sqrt(dx*dx + dy*dy);
+                    if(dist>10) {
+                        v0.x += dx/dist*Math.min(dist,10);
+                        v0.y += dy/dist*Math.min(dist,10);
+                        voyager.unshift(v0);
+                    }
+                }
+            }
+        }            
+        
+        function draw(fromX,fromY,toX,toY) {
+            paths.push([fromX,fromY,toX,toY,mode]);
+            
+            updateDrawing();
+        }
+        
+        function updateDrawing() {
+            context.clearRect(0,0,800,600);
+            context.beginPath();
+            context.lineWidth=30;
+            context.strokeStyle="#000000";
+            context.globalCompositeOperation = "source-over";
+            var m = "draw";
+            var currentPos = {x:0,y:0};
+            for(var i=0;i<paths.length;i++) {
+                if(m!=paths[i][4]) {
+                    m = paths[i][4];
+                    context.stroke();
+                    context.beginPath();
+                    context.globalCompositeOperation = m=="draw"?"source-over":'destination-out';
+                    context.moveTo(currentPos.x,currentPos.y);
+                }
+                
+                var fromX = paths[i][0], fromY = paths[i][1], toX = paths[i][2], toY = paths[i][3];
+                if(currentPos.x!=fromX && currentPos.y!=fromY)
+                    context.moveTo(fromX,fromY);
+                context.lineTo(toX,toY);
+                currentPos.x = toX;
+                currentPos.y = toY;
+            }
+            context.stroke();
+            
+            context.beginPath();
+            context.lineWidth=3;
+            context.globalCompositeOperation = "source-over";
+            context.strokeStyle="pink";
+            var v;
+            for(var i=0;i<voyager.length;i++) {
+                v = voyager[i];
+                if(i==0) {
+                    context.moveTo(v.x,v.y);
+                }
+                else {
+                    context.lineTo(v.x,v.y);
+                }
+            }
+            context.stroke();
+            if(v) {
+                context.beginPath();
+                context.arc(v.x,v.y,3,0,2*Math.PI);
+                context.fillStyle = "#FF0000";
+                context.fill();
+            }
+        }
+        
+        function changeMode(m) {
+            mode = m;
+            updateButtons();
+        }
+        
+        function updateButtons() {
+            var drawButton = document.getElementById("drawButton");
+            drawButton.style.background=mode=='draw'?'pink':null;
+            eraseButton.style.background=mode=='erase'?'pink':null;
+            voyageButton.style.background=mode=='voyage'?'pink':null;
+        }
+        
+        //  event called when the page's DOM is loaded. Occurs before onLoad
+        window.addEventListener("DOMContentLoaded",onDOMContentLoaded); 
+    </script>
+    
+    <body class="noselect" >
+        A visual study of <a href="http://en.wikipedia.org/wiki/Best-first_search">Best-First Search</a> algorithm
+        <br>
+        <br>
+        Best first search finds a path between two points using a greedy method. It is not guaranteed to find the shortest path, but it finds a path faster than Dijkstra.
+        In this program, use [draw/erase] to produce walls, then use [voyage] to move a ball betwen two points. Note that vertices are created on the fly, and they just represented
+        jumps to any of the 8 direction (NW,N,NE,W,E,SW,S,SE) by 20 pixels. Because of that, the ball could
+        possibly jump through thin walls.
+        <br>
+        <div style="text-align:center; width:100%"> 
+            <button id="drawButton" style="width:150;height:40px;" onclick="changeMode('draw')">draw</button>
+            <button id="eraseButton" style="width:150;height:40px;" onclick="changeMode('erase')">erase</button>
+            <button id="voyageButton" style="width:150;height:40px;" onclick="changeMode('voyage')">voyage</button>
+            <br>
+            <canvas id="canvas" width=800 height=600 style="border:2px solid black; display:inline">
+                
+            </canvas>
+        </div>
+        <hr>
+    </body>
+</html>

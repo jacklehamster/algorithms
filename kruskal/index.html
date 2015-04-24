@@ -24,6 +24,32 @@
         var trees = [];
         var selectedTree = -1;
         
+        function clearScreen() {
+            selectedTree = -1;
+            trees = [];
+            update();
+            save();
+        }
+        
+        function save() {
+            localStorage.setItem(
+                "data", JSON.stringify({
+                    trees:trees,
+                    selectedTree:selectedTree,
+                })
+            );
+        }
+        
+        function load() {
+            var data = localStorage.getItem("data");
+            if(data) {
+                data = JSON.parse(data);
+                trees = data.trees;
+                selectedTree = data.selectedTree;
+            }
+            update(true);
+        }
+        
         //  onLoad function
         function onDOMContentLoaded(event) {
             algo = new Algo();
@@ -33,6 +59,10 @@
             
             canvas.addEventListener("mousemove",mouseMove);
             canvas.addEventListener("mousedown",mouseMove);
+            load();
+            document.addEventListener("visibilitychange", function() {
+                load();
+            });
         }
         
         function updateDisplay() {
@@ -40,6 +70,7 @@
         }
         
         function mouseMove(e) {
+            var needsUpdate = false;
             if(e.type=="mousedown") {
                 var x = e.pageX - canvas.offsetLeft;
                 var y = e.pageY - canvas.offsetTop;
@@ -61,7 +92,7 @@
                     trees.push({x:x,y:y});
                     selectedTree=trees.length-1;
                 }
-                update();
+                needsUpdate = true;
             }
             else {
                 var ispen = (e.buttons!==undefined?e.buttons:e.which);
@@ -71,7 +102,7 @@
                     if(ispen) {
                         trees[selectedTree].x = x;
                         trees[selectedTree].y = y;
-                        update();
+                        needsUpdate = true;
                     }
                     else {
                         selectedTree = -1;
@@ -79,6 +110,22 @@
                 }
                 
             }
+            if(needsUpdate) {
+                update();
+                save();
+            }
+        }
+        
+        function pathDistanceNodes(path) {
+            var dist = 0;
+            for(var i=0;i<path.length-1;i++) {
+                var v = path[i];
+                var v2 = path[i+1];
+                var dx = v.x-v2.x;
+                var dy = v.y-v2.y;
+                dist += Math.sqrt(dx*dx+dy*dy);
+            }
+            return dist;
         }
         
         function update() {
@@ -87,6 +134,27 @@
             var connections = algo.connect(trees,treecolors);
             
             context.clearRect(0,0,800,600);
+            
+            context.beginPath();
+            for(var i=0;i<connections.length;i++) {
+                var connection = connections[i];
+                context.moveTo(connection.from.x,connection.from.y);
+                context.lineTo(connection.to.x,connection.to.y);
+            }
+            context.stroke();
+            
+            context.beginPath();
+            context.font = "10px serif";
+            context.fillStyle = "#8888ff";
+            for(var i=0;i<connections.length;i++) {
+                var connection = connections[i];
+                var px = (connection.from.x+connection.to.x)/2;
+                var py = (connection.from.y+connection.to.y)/2;
+                var str = ""+pathDistanceNodes([connection.from,connection.to]).toFixed(0);
+                context.fillText(str,px-5*str.length,py);
+            }
+            context.fill();
+            
             context.beginPath();
             context.fillStyle = "#009900";
             context.globalCompositeOperation = "source-over";
@@ -103,12 +171,16 @@
             context.fill();
             
             context.beginPath();
-            for(var i=0;i<connections.length;i++) {
-                var connection = connections[i];
-                context.moveTo(connection.from.x,connection.from.y);
-                context.lineTo(connection.to.x,connection.to.y);
+            context.fillStyle = "#FFFFFF";
+            context.font = "16px serif";
+            context.globalCompositeOperation = "source-over";
+            for(var i=0;i<trees.length;i++) {
+                var tree = trees[i];
+                var str = ""+i;
+                context.fillText(str,tree.x-4*str.length,tree.y+5);
             }
-            context.stroke();
+            context.fill();
+            
         }
         
         
@@ -121,9 +193,11 @@
         <br>
         <br>
         Place trees or move them with the mouse. Edges are created if their distances are less than 100px.
-        Kruskal's algorithm is used to create a minimum spanning tree. When moving or placing a new vertex, the algorithms will also assign a new color to each group, so you might see them flashing when you move a vertex around.
+        Kruskal's algorithm is used to create a minimum spanning tree.
         <br>
         <div style="text-align:center;width:100%">
+            <button id="clearButton" style="width:150;height:40px;" onclick="clearScreen()">clear</button>
+            <br>
             <canvas id="canvas" width=800 height=600 style="border:2px solid black; display:inline">
             </canvas>
         </div>

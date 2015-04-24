@@ -24,6 +24,33 @@
         var trees = [];
         var selectedTree = -1, hoveredTree = -1, movedTree = -1, hasMoved = false;
         
+        function clearScreen() {
+            selectedTree = -1; hoveredTree = -1; movedTree = -1; hasMoved = false;
+            trees = [];
+            update();
+            save();
+        }
+        
+        function save() {
+            localStorage.setItem(
+                "data", JSON.stringify({
+                    trees:trees,
+                    selectedTree:selectedTree,
+                })
+            );
+        }
+        
+        function load() {
+            var data = localStorage.getItem("data");
+            if(data) {
+                data = JSON.parse(data);
+                trees = data.trees;
+                selectedTree = data.selectedTree;
+            }
+            update();
+        }
+        
+        
         //  onLoad function
         function onDOMContentLoaded(event) {
             algo = new Algo();
@@ -42,6 +69,10 @@
                     update(true);
                 }
             );
+            document.addEventListener("visibilitychange", function() {
+                load();
+            });
+            load();
         }
         
         function updateDisplay() {
@@ -108,6 +139,7 @@
             
             if(needsUpdate) {
                 update();
+                save();
             }
         }
         
@@ -117,17 +149,53 @@
             var connections = algo.connect(trees,selectedTree,hoveredTree,shortestPath);
             
             context.clearRect(0,0,800,600);
+            
+            context.beginPath();
+            context.strokeStyle = "#000000";
+            context.lineWidth = 1;
+            for(var i=0;i<connections.length;i++) {
+                var connection = connections[i];
+                context.moveTo(connection.from.x,connection.from.y);
+                context.lineTo(connection.to.x,connection.to.y);
+            }
+            context.stroke();
+            
+            if(shortestPath.length) {
+                context.beginPath();
+                context.strokeStyle = "#FF0000";
+                context.lineWidth = 3;
+                var treeIndex = selectedTree;
+                context.moveTo(trees[treeIndex].x,trees[treeIndex].y);
+                var sp = shortestPath.concat([]);
+                sp.reverse();
+                while(sp.length) {
+                    treeIndex = sp.pop();
+                    context.lineTo(trees[treeIndex].x,trees[treeIndex].y);
+                }
+                context.stroke();
+            }
+            
             context.beginPath();
             context.fillStyle = "#009900";
             context.globalCompositeOperation = "source-over";
             for(var i=0;i<trees.length;i++) {
                 var tree = trees[i];
-                if(i!=selectedTree) {
+                if(i!=selectedTree && shortestPath.indexOf(i)<0) {
                     context.moveTo(tree.x,tree.y);
                     context.arc(tree.x,tree.y,10,0,2*Math.PI);
                 }
             }
             context.fill();
+            
+            context.beginPath();
+            context.fillStyle = "#FFaaaa";
+            context.globalCompositeOperation = "source-over";
+            for(var i=0;i<shortestPath.length;i++) {
+                var tree = trees[shortestPath[i]];
+                context.moveTo(tree.x,tree.y);
+                context.arc(tree.x,tree.y,10,0,2*Math.PI);
+            }
+            context.fill();            
             
             if(hoveredTree>=0) {
                 context.beginPath();
@@ -149,28 +217,16 @@
             }
             
             context.beginPath();
-            context.strokeStyle = "#000000";
-            context.lineWidth = 1;
-            for(var i=0;i<connections.length;i++) {
-                var connection = connections[i];
-                context.moveTo(connection.from.x,connection.from.y);
-                context.lineTo(connection.to.x,connection.to.y);
+            context.fillStyle = "#FFFFFF";
+            context.font = "16px serif";
+            context.globalCompositeOperation = "source-over";
+            for(var i=0;i<trees.length;i++) {
+                var tree = trees[i];
+                var str = ""+i;
+                context.fillText(str,tree.x-4*str.length,tree.y+5);
             }
-            context.stroke();
+            context.fill();
             
-            if(shortestPath.length) {
-                context.beginPath();
-                context.strokeStyle = "#FF0000";
-                context.lineWidth = 3;
-                var treeIndex = selectedTree;
-                context.moveTo(trees[treeIndex].x,trees[treeIndex].y);
-                shortestPath.reverse();
-                while(shortestPath.length) {
-                    treeIndex = shortestPath.pop();
-                    context.lineTo(trees[treeIndex].x,trees[treeIndex].y);
-                }
-                context.stroke();
-            }
         }
         
         
@@ -187,6 +243,8 @@
         Click on a tree to select it, then hover over another tree to see the shortest path (in terms of vertices) from the selected tree to the hovered tree.
         <br>
         <div style="text-align:center;width:100%">
+            <button id="clearButton" style="width:150;height:40px;" onclick="clearScreen()">clear</button>
+            <br>
             <canvas id="canvas" width=800 height=600 style="border:2px solid black; display:inline">
             </canvas>
         </div>

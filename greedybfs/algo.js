@@ -34,12 +34,8 @@ function Algo() {
         heapInsert(vertices,value,getDist);
     }
     
-    function modifiedVertex(value,vertices) {
-        heapFix(vertices,value,getDist);
-    }
-
     //  processing functions
-    function processNeighbors(u,visited,vertices,canGoXY) {
+    function processNeighbors(u,visited,vertices,canGoXY,to) {
         
         //  We don't really have a list of vertices. So we consider all neighbors to be the surroundings
         //  A B C
@@ -63,7 +59,7 @@ function Algo() {
             if(!canGoXY(pos.x,pos.y)) {
                 continue;
             }
-            var dist = u.dist + distance(u.pos,pos);
+            var dist = distance(pos,to);
             var id = pos.x+"_"+pos.y;
             var neighbor = visited[id];
             if(!neighbor) {
@@ -74,13 +70,6 @@ function Algo() {
                 };
                 visited[id] = neighbor;
                 addVertex(neighbor,vertices);
-            }
-            else {
-                if(dist<neighbor.dist) {
-                    neighbor.dist = dist;
-                    neighbor.from = u;
-                    modifiedVertex(neighbor,vertices);
-                }
             }
         }
     }
