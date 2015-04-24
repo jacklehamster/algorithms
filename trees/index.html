@@ -17,14 +17,57 @@
 
     <script language="javascript">
         
+        var storageName = "tree";
         var canvas;
         var context;
         var algo;
-        var root = {};
+        var root = {index:0};
         var trees = [];
+        var rootTable = [];
         var treeSpot = null;
         var closestTree = null;
-        var charIndex = 0;
+        var rootIndex = 1;
+        
+        function clearScreen() {
+            rootIndex = 1;
+            rootTable = [];
+            root = {index:0};
+            updateRootTable(root);
+            trees = [];
+            treeSpot = null;
+            closestTree = null;
+            update(true);
+            save();
+        }
+        
+        function updateRootTable(root) {
+            if(root) {
+                rootTable[root.index] = root;
+                updateRootTable(root.left);
+                updateRootTable(root.right);
+            }
+        }
+        
+        function save() {
+            localStorage.setItem(
+                storageName, JSON.stringify({
+                    root:root,
+                    rootIndex:rootIndex
+                })
+            );
+        }
+        
+        function load() {
+            var data = localStorage.getItem(storageName);
+            if(data) {
+                data = JSON.parse(data);
+                root = data.root;
+                rootIndex = data.rootIndex;
+            }
+            updateRootTable(root);
+            update(true);
+        }
+        
         
         //  onLoad function
         function onDOMContentLoaded(event) {
@@ -44,13 +87,17 @@
             canvas.addEventListener("mouseup",
                 function(e) {
                     if(closestTree) {
+                        var r = rootTable[closestTree.rootIndex];
                         if(treeSpot.x>closestTree.x) {
-                            closestTree.root.right = {};
+                            r.right = {index:rootIndex++};
+                            updateRootTable(r.right);
                         }
                         else {
-                            closestTree.root.left = {};
+                            r.left = {index:rootIndex++};
+                            updateRootTable(r.left);
                         }
                         treeSpot = null;
+                        save();
                     }
                     else {
                         var mov = 1;
@@ -80,8 +127,8 @@
                     update(true);
                 }
             );
-            update(true);
             refresh();
+            load();
         }
         
         var time = 0;
@@ -129,10 +176,11 @@
                 var index = closestTreeIndex(x,y);
                 if(index>=0) {
                     closestTree = trees[index];
-                    if(closestTree.root.left && treeSpot.x<closestTree.x) {
+                    var r = rootTable[closestTree.rootIndex];
+                    if(r.left && treeSpot.x<closestTree.x) {
                         closestTree = null;
                     }
-                    else if(closestTree.root.right && treeSpot.x>closestTree.x) {
+                    else if(r.right && treeSpot.x>closestTree.x) {
                         closestTree = null;
                     }
                 }
@@ -176,7 +224,7 @@
                 if(!root) {
                     return {leafIndex:leafIndex++,dummy:true};
                 }
-                var tree = root.tree?root.tree:root.tree = {root:root,goal:{x:x,y:y}};
+                var tree = root.tree?root.tree:root.tree = {rootIndex:root.index,goal:{x:x,y:y}};
                 tree.goal.x = x;
                 tree.goal.y = y;
                 trees.push(tree);
@@ -251,10 +299,7 @@
             context.globalCompositeOperation = "source-over";
             for(var i=0;i<trees.length;i++) {
                 var tree = trees[i];
-                if(!tree.root.char) {
-                    tree.root.char = String.fromCharCode('A'.charCodeAt(0)+charIndex++);
-                }
-                var str = ""+tree.root.char;
+                var str = ""+tree.rootIndex;
                 context.fillText(str,tree.x-5*str.length,tree.y+5);
             }
             context.fill();
@@ -272,6 +317,8 @@
         This is a simple visual presentation of a binary tree. You can add nodes left or right. This is a base for presenting more complex algorithms using trees.
         <br>
         <div style="text-align:center;width:100%">
+            <button id="clearButton" style="width:150;height:40px;" onclick="clearScreen()">clear</button>
+            <br>
             <canvas id="canvas" width=800 height=600 style="border:2px solid black; display:inline">
             </canvas>
         </div>

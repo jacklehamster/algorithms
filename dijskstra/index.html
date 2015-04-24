@@ -17,6 +17,7 @@
 
     <script language="javascript">
         
+        var storageName = "maze";
         var canvas;
         var context;
         var mode = null;
@@ -25,6 +26,36 @@
         var paths = [];
 
         var voyager = [];
+        
+        
+        function clearScreen() {
+            voyager = [];
+            paths = [];
+            updateDrawing();
+            save();
+        }
+        
+        function save() {
+            localStorage.setItem(
+                storageName, JSON.stringify({
+                    mode:mode,
+                    paths:paths,
+                    voyager:voyager,
+                })
+            );
+        }
+        
+        function load() {
+            var data = localStorage.getItem(storageName);
+            if(data) {
+                data = JSON.parse(data);
+                mode = data.mode;
+                paths = data.paths;
+                voyager = data.voyager;
+            }
+            updateDrawing();
+            updateButtons();
+        }
         
         
         //  onLoad function
@@ -40,6 +71,7 @@
             canvas.addEventListener("mouseout",mouseMove);
             canvas.addEventListener("mouseover",mouseMove);
             refresh();
+            load();
         }
         
         function mouseMove(e) {
@@ -109,6 +141,7 @@
                         v0.y += dy/dist*Math.min(dist,10);
                         voyager.unshift(v0);
                     }
+                    save();
                 }
             }
         }            
@@ -117,6 +150,7 @@
             paths.push([fromX,fromY,toX,toY,mode]);
             
             updateDrawing();
+            save();
         }
         
         function updateDrawing() {
@@ -171,6 +205,7 @@
         function changeMode(m) {
             mode = m;
             updateButtons();
+            save();
         }
         
         function updateButtons() {
@@ -198,6 +233,7 @@
             <button id="drawButton" style="width:150;height:40px;" onclick="changeMode('draw')">draw</button>
             <button id="eraseButton" style="width:150;height:40px;" onclick="changeMode('erase')">erase</button>
             <button id="voyageButton" style="width:150;height:40px;" onclick="changeMode('voyage')">voyage</button>
+            <button id="clearButton" style="width:150;height:40px;" onclick="clearScreen()">clear</button>
             <br>
             <canvas id="canvas" width=800 height=600 style="border:2px solid black; display:inline">
                 

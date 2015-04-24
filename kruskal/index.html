@@ -16,7 +16,7 @@
     </head>
 
     <script language="javascript">
-        
+        var storageName = "graph";
         var canvas;
         var context;
         var algo;
@@ -33,7 +33,7 @@
         
         function save() {
             localStorage.setItem(
-                "data", JSON.stringify({
+                storageName, JSON.stringify({
                     trees:trees,
                     selectedTree:selectedTree,
                 })
@@ -41,7 +41,7 @@
         }
         
         function load() {
-            var data = localStorage.getItem("data");
+            var data = localStorage.getItem(storageName);
             if(data) {
                 data = JSON.parse(data);
                 trees = data.trees;
