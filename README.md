@@ -22,3 +22,7 @@ http://jacklehamster.github.io/algorithms/
   <li><h3><a href="bfs">Breath-First Search</a></h3>
     <h4>Algorithm to find the shortest path (in terms of nodes visited)</h4>
   </li>
+  
+  <li><h3><a href="trees">Binary Trees</a></h3>
+    <h4>Representation of Binary Trees</h4>
+  </li>
