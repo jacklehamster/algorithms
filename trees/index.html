@@ -1,0 +1,280 @@
+<!--
+    index.html
+
+    CODING PRACTICE
+    Vincent Le Quang
+    April 18, 2015
+-->
+
+<html>
+    <head>
+        <title>Binary Trees</title>
+        <script src="../../header.js"></script>
+        <link rel="stylesheet" type="text/css" href="algo.css">
+        <script language="javascript" src="../lib/heap.js"></script>
+        <script language="javascript" src="algo.js"></script>
+    </head>
+
+    <script language="javascript">
+        
+        var canvas;
+        var context;
+        var algo;
+        var root = {};
+        var trees = [];
+        var treeSpot = null;
+        var closestTree = null;
+        var charIndex = 0;
+        
+        //  onLoad function
+        function onDOMContentLoaded(event) {
+            
+            root = {
+            };
+            
+            algo = new Algo();
+            algo.start();
+            canvas = document.getElementById("canvas");
+            context = canvas.getContext("2d");
+            
+            canvas.addEventListener("mousemove",mouseMove);
+            canvas.addEventListener("mousedown",mouseMove);
+            
+            var interval = 0;
+            canvas.addEventListener("mouseup",
+                function(e) {
+                    if(closestTree) {
+                        if(treeSpot.x>closestTree.x) {
+                            closestTree.root.right = {};
+                        }
+                        else {
+                            closestTree.root.left = {};
+                        }
+                        treeSpot = null;
+                    }
+                    else {
+                        var mov = 1;
+                        if(interval) {
+                            clearInterval(interval);
+                        }
+                        interval = setInterval(
+                            function() {
+                                if(treeSpot) {
+                                    treeSpot.y += mov;
+                                    mov+=2;
+                                    if(treeSpot.y>600) {
+                                        treeSpot = null;
+                                        closestTree = null;
+                                        clearInterval(interval);
+                                        interval = null;
+                                    }
+                                    update(false);
+                                }
+                                else {
+                                    clearInterval(interval);
+                                    interval = null;
+                                }
+                            },20
+                        );
+                    }
+                    update(true);
+                }
+            );
+            update(true);
+            refresh();
+        }
+        
+        var time = 0;
+        function refresh() {
+            requestAnimationFrame(refresh);            
+            var now = new Date().getTime();
+            if(now-time>10) {
+                time = now;
+                moveNodes();
+                update(false);
+            }
+        }            
+        
+        function moveNodes() {
+            for(var i=0;i<trees.length;i++) {
+                var tree = trees[i];
+                var dx = tree.goal.x - tree.x;
+                var dy = tree.goal.y - tree.y;
+                tree.x += dx/5;
+                tree.y += dy/5;
+                if(Math.sqrt(dx*dx+dy*dy)<1) {
+                    tree.x = tree.goal.x;
+                    tree.y = tree.goal.y;
+                }
+            }
+        }
+        
+        function updateDisplay() {
+            context.clearRect(0,0,800,600);
+        }
+        
+        function mouseMove(e) {
+            var needsUpdate = false;
+            
+            var x = e.pageX - canvas.offsetLeft;
+            var y = e.pageY - canvas.offsetTop;
+            var ispen = (e.buttons!==undefined?e.buttons:e.which);
+
+            if(ispen) {
+                if(!treeSpot)
+                    treeSpot = {};
+                treeSpot.x = x;
+                treeSpot.y = y;
+                
+                var index = closestTreeIndex(x,y);
+                if(index>=0) {
+                    closestTree = trees[index];
+                    if(closestTree.root.left && treeSpot.x<closestTree.x) {
+                        closestTree = null;
+                    }
+                    else if(closestTree.root.right && treeSpot.x>closestTree.x) {
+                        closestTree = null;
+                    }
+                }
+                else {
+                    closestTree = null;
+                }
+            }
+            update(true);
+            
+        }
+        
+        function distance(a,b) {
+            var dx = a.x - b.x;
+            var dy = a.y - b.y;
+            var dist = Math.sqrt(dx*dx+dy*dy);
+            return dist;
+        }
+        
+        function closestTreeIndex(x,y) {
+            var minDist = 100;
+            var treeIndex = -1;
+            for(var i=0;i<trees.length;i++) {
+                var dx = trees[i].x - x;
+                var dy = trees[i].y - y;
+                if(dy<0) {
+                    var dist = Math.sqrt(dx*dx+dy*dy);
+                    if(dist<minDist) {
+                        treeIndex = i;
+                        minDist = dist;
+                    }
+                }
+            }
+            return treeIndex;
+        }
+        
+        function update(doUpdateTrees) {
+            
+            var maxY=0;
+            var leafIndex = 0;
+            function updateTrees(root,x,y) {
+                if(!root) {
+                    return {leafIndex:leafIndex++,dummy:true};
+                }
+                var tree = root.tree?root.tree:root.tree = {root:root,goal:{x:x,y:y}};
+                tree.goal.x = x;
+                tree.goal.y = y;
+                trees.push(tree);
+                var left = updateTrees(root.left,x-1,y+1);
+                var right = updateTrees(root.right,x+1,y+1);
+                
+                left.parent = tree;
+                right.parent = tree;
+                tree.leafIndex = (left.leafIndex+right.leafIndex)/2;
+                
+                maxY = Math.max(y,maxY);
+                return tree;
+            }
+
+            function rescaleTrees() {
+                for(var i=0;i<trees.length;i++) {
+                    var tree = trees[i];
+                    tree.goal.x = 50 + 700*(tree.leafIndex)/(leafIndex-1);
+                    tree.goal.y = 50 + tree.goal.y*Math.min(100,500/maxY);
+                    if(!tree.x) {
+                        tree.x = tree.goal.x;
+                    }
+                    if(!tree.y) {
+                        tree.y = tree.goal.y;
+                    }
+                }
+            }
+            
+            if(doUpdateTrees) {
+                trees = [];
+                updateTrees(root,0,0);
+                rescaleTrees();
+            }
+            
+            context.clearRect(0,0,800,600);
+
+            context.beginPath();
+            context.globalCompositeOperation = "source-over";
+            for(var i=0;i<trees.length;i++) {
+                var tree = trees[i];
+                if(tree.parent) {
+                    context.moveTo(tree.x,tree.y);
+                    context.lineTo(tree.parent.x,tree.parent.y);
+                }
+            }
+            
+            if(closestTree && treeSpot && distance(closestTree,treeSpot)<=100) {
+                context.moveTo(closestTree.x,closestTree.y);
+                context.lineTo(treeSpot.x,treeSpot.y);
+            }
+            context.stroke();
+
+            context.beginPath();
+            context.fillStyle = "#009900";
+            context.globalCompositeOperation = "source-over";
+            for(var i=0;i<trees.length;i++) {
+                var tree = trees[i];
+                context.moveTo(tree.x,tree.y);
+                context.arc(tree.x,tree.y,10,0,2*Math.PI);
+            }
+            
+            if(treeSpot) {
+                context.moveTo(treeSpot.x,treeSpot.y);
+                context.arc(treeSpot.x,treeSpot.y,10,0,2*Math.PI);
+            }
+            
+            context.fill();
+            
+            context.beginPath();
+            context.fillStyle = "#FFFFFF";
+            context.font = "16px serif";
+            context.globalCompositeOperation = "source-over";
+            for(var i=0;i<trees.length;i++) {
+                var tree = trees[i];
+                if(!tree.root.char) {
+                    tree.root.char = String.fromCharCode('A'.charCodeAt(0)+charIndex++);
+                }
+                var str = ""+tree.root.char;
+                context.fillText(str,tree.x-5*str.length,tree.y+5);
+            }
+            context.fill();
+        }
+        
+        
+        //  event called when the page's DOM is loaded. Occurs before onLoad
+        window.addEventListener("DOMContentLoaded",onDOMContentLoaded); 
+    </script>
+    
+    <body class="noselect" >
+        A visual interpretation of <a href="http://en.wikipedia.org/wiki/Binary_tree">Binary Trees</a>.
+        <br>
+        <br>
+        This is a simple visual presentation of a binary tree. You can add nodes left or right. This is a base for presenting more complex algorithms using trees.
+        <br>
+        <div style="text-align:center;width:100%">
+            <canvas id="canvas" width=800 height=600 style="border:2px solid black; display:inline">
+            </canvas>
+        </div>
+        <hr>
+    </body>
+</html>
