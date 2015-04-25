@@ -200,10 +200,10 @@
                 context.lineWidth = 3;
                 var treeIndex = selectedTree;
                 context.moveTo(trees[treeIndex].x,trees[treeIndex].y);
-                shortestPath.reverse();
-                console.log(pathDistance(shortestPath),shortestPath);
-                while(shortestPath.length) {
-                    treeIndex = shortestPath.pop();
+                var sp = shortestPath.concat();
+                sp.reverse();
+                while(sp.length) {
+                    treeIndex = sp.pop();
                     context.lineTo(trees[treeIndex].x,trees[treeIndex].y);
                 }
                 context.stroke();
