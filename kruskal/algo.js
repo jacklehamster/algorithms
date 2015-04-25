@@ -87,7 +87,7 @@ function Algo() {
         
         var validEdges = [];
         while(heap.length && groupcount>1) {
-            var edge = heapRetrieve(heap,getDist,false);
+            var edge = heapRetrieve(heap,getDist);
             if(sameGroup(edge.indexes[0],edge.indexes[1],groups)) {
             }
             else {
