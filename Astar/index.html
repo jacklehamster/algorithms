@@ -223,6 +223,17 @@
             }
             context.fill();
             
+            context.beginPath();
+            context.fillStyle = "#FFaaaa";
+            context.globalCompositeOperation = "source-over";
+            for(var i=0;i<shortestPath.length;i++) {
+                var tree = trees[shortestPath[i]];
+                context.moveTo(tree.x,tree.y);
+                context.arc(tree.x,tree.y,10,0,2*Math.PI);
+            }
+            context.fill();            
+            
+            
             if(hoveredTree>=0) {
                 context.beginPath();
                 var tree = trees[hoveredTree];
