@@ -22,7 +22,7 @@ http://jacklehamster.github.io/algorithms/
     <h4>Algorithm to find pairs of shortest paths over the entire graph</h4>
   </li>
 
-  <li><h3><a href="bfs">Breath-First Search</a></h3>
+  <li><h3><a href="bfs">Breadth-First Search</a></h3>
     <h4>Algorithm to find the shortest path (in terms of nodes visited)</h4>
   </li>
   
