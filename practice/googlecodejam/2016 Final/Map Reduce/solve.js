@@ -34,29 +34,32 @@ function solve(stream) {
             travel(x,y,input,0,distFinish,{});
         }
     }
-    cout(input.D+"\n");
+//    cout(input.D+"\n");
 
     for(var i in distStart) {
         for(var s in distStart[i]) {
             for(var f in distFinish[i]) {
                 var total = parseInt(s) + parseInt(f);
                 if(total==input.D) {
-                    cout("POSSIBLE\n");
                     var split = i.split("_");
                     var xx = parseInt(split[0]);
                     var yy = parseInt(split[1]);
-                    console.log(xx,yy);
-                    if(map[yy].charAt(xx)==='#') {
-                        changeMap(map,xx,yy,'X');
-                    }
+                    if(map[yy].charAt(xx)!=='.') {
+                        cout("POSSIBLE\n");
+//                        cout(split+"\n");
+//                        console.log(xx,yy);
+                        if(map[yy].charAt(xx)==='#') {
+                            changeMap(map,xx,yy,'.');
+                        }
 
 //            testGame(start.x,start.y,input,0,{});
 
-                    for(var y=0;y<map.length;y++) {
-                        cout(map[y]+"\n");
-                    }
+                        for(var y=0;y<map.length;y++) {
+                            cout(map[y]+"\n");
+                        }
 
-                    return;
+                        return;
+                    }
                 }
             }
         }
