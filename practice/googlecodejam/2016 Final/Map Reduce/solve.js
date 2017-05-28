@@ -19,6 +19,8 @@ function solve(stream) {
     var input = parse(stream);
     var map = input.map;
 
+//    cout(input.D+"\n");
+
     var start = {x:0,y:0};
     var distStart = {};
     var distFinish = {};
@@ -27,46 +29,21 @@ function solve(stream) {
         if(x>=0) {
             start.x = x;
             start.y = y;
-            travel(x,y,input,0,distStart,{});
-        }
-        x = map[y].indexOf("F");
-        if(x>=0) {
-            travel(x,y,input,0,distFinish,{});
-        }
-    }
-//    cout(input.D+"\n");
-
-    for(var i in distStart) {
-        for(var s in distStart[i]) {
-            for(var f in distFinish[i]) {
-                var total = parseInt(s) + parseInt(f);
-                if(total==input.D) {
-                    var split = i.split("_");
-                    var xx = parseInt(split[0]);
-                    var yy = parseInt(split[1]);
-                    if(map[yy].charAt(xx)!=='.') {
-                        cout("POSSIBLE\n");
-//                        cout(split+"\n");
-//                        console.log(xx,yy);
-                        if(map[yy].charAt(xx)==='#') {
-                            changeMap(map,xx,yy,'.');
-                        }
-
-//            testGame(start.x,start.y,input,0,{});
-
-                        for(var y=0;y<map.length;y++) {
-                            cout(map[y]+"\n");
-                        }
-
-                        return;
-                    }
+            var result = travel(x,y,input,distStart,{});
+            if(result.success) {
+                cout("POSSIBLE\n");
+                if(result.key) {
+                    changeMap(map,result.key.x,result.key.y,'.');
                 }
+                for(var y=0;y<map.length;y++) {
+                    cout(map[y]+"\n");
+                }
+                return;
+            } else {
+                cout("IMPOSSIBLE\n");
             }
         }
     }
-
-    cout("IMPOSSIBLE\n");
-    return;
 }
 
 function changeMap(map,x,y,value) {
@@ -113,20 +90,45 @@ function outside(x,y,dimension) {
     return x<0 || y<0 || x>=dimension.C || y>=dimension.R;
 }
 
-function travel(x,y,dimension,dist,distReport,visited) {
-    if(outside(x,y,dimension)) return;
-    if(visited[x+"_"+y]) return;
-    visited[x+"_"+y] = true;
+function travel(x,y,dimension,visited) {
+    var far = {x:-100000,y:-100000,dist:-1,key:null};
+    far.from = far;
+    var point = {x:x,y:y,dist:0,key:null,from:far};
+    var bag = [point];
 
-    if(!distReport[x+"_"+y]) {
-        distReport[x+"_"+y] = {};
-    }
-    distReport[x+"_"+y][dist] = true;
+    while(bag.length) {
+        var pos = bag.shift();
+        if(pos.dist>dimension.D) {
+            continue;
+        }
 
-    if(dimension.map[y][x]==='.' || dist===0) {
-        travel(x-1,y,dimension,dist+1,distReport,visited);
-        travel(x+1,y,dimension,dist+1,distReport,visited);
-        travel(x,y-1,dimension,dist+1,distReport,visited);
-        travel(x,y+1,dimension,dist+1,distReport,visited);
+
+        if(pos.from.from.x===pos.x && pos.from.from.y===pos.y) continue;
+        if(outside(pos.x,pos.y,dimension)) continue;
+//        if(visited[pos.x+"_"+pos.y+"_"+(pos.key===null)]) continue;
+  //      visited[pos.x+"_"+pos.y+"_"+(pos.key===null)] = true;
+
+        if(dimension.map[pos.y][pos.x]==='F') {
+            if(pos.dist===dimension.D) {
+                return {key: pos.key, success: true};
+            } else {
+                continue;
+            }
+        }
+
+        var key = pos.key;
+        if(dimension.map[pos.y][pos.x]==='#') {
+            if(key) {
+                continue;
+            } else {
+                key = {x:pos.x, y:pos.y};
+            }
+        }
+
+        bag.push({x:pos.x+1,y:pos.y,dist:pos.dist+1,key:key,from:pos});
+        bag.push({x:pos.x-1,y:pos.y,dist:pos.dist+1,key:key,from:pos});
+        bag.push({x:pos.x,y:pos.y+1,dist:pos.dist+1,key:key,from:pos});
+        bag.push({x:pos.x,y:pos.y-1,dist:pos.dist+1,key:key,from:pos});
     }
+    return {success: false};
 }
